@@ -1,0 +1,28 @@
+{
+  "intents": [
+    {
+      "tag": "budget",
+      "patterns": ["how to budget", "help me budget", "budgeting tips"],
+      "responses": [
+        "Start by tracking your income and expenses.",
+        "Use the 50/30/20 rule: Needs, Wants, Savings."
+      ]
+    },
+    {
+      "tag": "save",
+      "patterns": ["how to save", "saving tips", "best way to save money"],
+      "responses": [
+        "Set up automatic transfers to your savings.",
+        "Try saving 20% of your income each month."
+      ]
+    },
+    {
+      "tag": "invest",
+      "patterns": ["how to invest", "investing tips", "best way to invest"],
+      "responses": [
+        "Diversify your portfolio across multiple asset types.",
+        "Start with index funds or ETFs for low risk."
+      ]
+    }
+  ]
+}

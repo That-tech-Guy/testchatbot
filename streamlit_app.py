@@ -1,56 +1,127 @@
 import streamlit as st
-from openai import OpenAI
+import random
+import json
 
-# Show title and description.
-st.title("💬 Chatbot")
-st.write(
-    "This is a simple chatbot that uses OpenAI's GPT-3.5 model to generate responses. "
-    "To use this app, you need to provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys). "
-    "You can also learn how to build this app step by step by [following our tutorial](https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
-)
+st.set_page_config(page_title="Financial Education", layout="wide")
 
-# Ask user for their OpenAI API key via `st.text_input`.
-# Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
-# via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
-openai_api_key = st.text_input("OpenAI API Key", type="password")
-if not openai_api_key:
-    st.info("Please add your OpenAI API key to continue.", icon="🗝️")
-else:
+# --- Load chatbot data ---
+def load_intents():
+    with open("data/intents.json") as f:
+        return json.load(f)
 
-    # Create an OpenAI client.
-    client = OpenAI(api_key=openai_api_key)
+intents = load_intents()
 
-    # Create a session state variable to store the chat messages. This ensures that the
-    # messages persist across reruns.
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+def get_response(user_input):
+    for intent in intents["intents"]:
+        for pattern in intent["patterns"]:
+            if pattern.lower() in user_input.lower():
+                return random.choice(intent["responses"])
+    return "Sorry, I didn't understand that. Try asking about saving, investing, or budgeting."
 
-    # Display the existing chat messages via `st.chat_message`.
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+# --- Header Section ---
+st.markdown("""
+    <style>
+        .navbar {
+            background-color: #f0f2f6;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ccc;
+        }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #4a4a4a;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            color: #888;
+            border-top: 1px solid #ccc;
+            margin-top: 2rem;
+        }
+    </style>
 
-    # Create a chat input field to allow the user to enter a message. This will display
-    # automatically at the bottom of the page.
-    if prompt := st.chat_input("What is up?"):
+    <div class="navbar">
+        <div style="font-size: 1.5rem; font-weight: bold;">💸 Financial Education</div>
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#budgeting">Budgeting</a>
+            <a href="#investing">Investing</a>
+            <a href="#saving">Saving</a>
+            <a href="#chatbot">Chatbot</a>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
-        # Store and display the current prompt.
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+# --- Sections ---
+st.markdown('<h2 id="home">🏠 Welcome</h2>', unsafe_allow_html=True)
+st.write("""
+Welcome to your hub for financial literacy. Learn the essentials of budgeting, saving, and investing, and chat with our assistant to guide your journey toward financial independence.
+""")
 
-        # Generate a response using the OpenAI API.
-        stream = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            stream=True,
-        )
+st.markdown('---')
 
-        # Stream the response to the chat using `st.write_stream`, then store it in 
-        # session state.
-        with st.chat_message("assistant"):
-            response = st.write_stream(stream)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+st.markdown('<h2 id="budgeting">💰 Budgeting</h2>', unsafe_allow_html=True)
+st.write("""
+Learn how to plan your spending with the 50/30/20 rule:
+- **50%** for Needs
+- **30%** for Wants
+- **20%** for Savings
+""")
+
+income = st.number_input("Enter your monthly income ($):", min_value=0)
+if income:
+    st.success(f"Suggested:\n\n- Needs: ${income * 0.5:.2f}\n- Wants: ${income * 0.3:.2f}\n- Savings: ${income * 0.2:.2f}")
+
+st.markdown('---')
+
+st.markdown('<h2 id="investing">📈 Investing</h2>', unsafe_allow_html=True)
+st.write("""
+Understand how to grow your wealth:
+- Begin with low-risk options like **bonds** or **index funds**
+- Understand **risk vs. reward**
+- Avoid investing money you can't afford to lose
+""")
+
+risk = st.selectbox("Select your risk appetite", ["Low", "Medium", "High"])
+if risk:
+    st.info(f"Suggested for {risk} risk:")
+    if risk == "Low":
+        st.write("- Government Bonds\n- Savings Accounts\n- Certificates of Deposit")
+    elif risk == "Medium":
+        st.write("- ETFs\n- Balanced Funds\n- Real Estate")
+    else:
+        st.write("- Stocks\n- Crypto\n- Startups")
+
+st.markdown('---')
+
+st.markdown('<h2 id="saving">💾 Saving</h2>', unsafe_allow_html=True)
+st.write("""
+Smart saving helps you build a safety net:
+- Set clear goals
+- Use automatic transfers
+- Save before spending
+""")
+
+goal = st.text_input("What are you saving for?")
+amount = st.number_input("Goal amount ($):", min_value=0)
+months = st.slider("Months to reach goal:", 1, 24, 6)
+if goal and amount:
+    monthly = amount / months
+    st.success(f"Save ${monthly:.2f} per month to reach your **{goal}** goal in {months} months.")
+
+st.markdown('---')
+
+st.markdown('<h2 id="chatbot">🤖 Ask Me Anything</h2>', unsafe_allow_html=True)
+user_question = st.text_input("Your finance question:")
+if user_question:
+    st.write("💬 You:", user_question)
+    st.write("🤖 Bot:", get_response(user_question))
+
+st.markdown('<div class="footer">© 2025 Financial Education Project</div>', unsafe_allow_html=True)
